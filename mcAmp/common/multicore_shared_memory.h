@@ -125,6 +125,8 @@ typedef struct
     char sharc_core2_event_message[EVENT_LOG_MESSAGE_LEN];
 
     // Add any parameters that you'd like all three cores to access here
+    uint32_t paramUpdateFlag;
+	uint8_t switchPosition;
 
     /*
      * If we're using Faust on both cores, use a simple FIFO to move MIDI notes

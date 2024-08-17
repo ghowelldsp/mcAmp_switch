@@ -190,6 +190,14 @@
 /*
  * Place any initialization code here for the audio processing
  */
+#include "code_lib_c.h"
+
+#define SWITCH_STATE_MEMORY_SIZE         		(3U)
+
+char switchStateMem[SWITCH_STATE_MEMORY_SIZE] = {0};
+
+switch_f32_handle_t switchH;
+
 void processaudio_setup(void) {
 
 	// Initialize the audio effects in the audio_processing/ folder
@@ -198,7 +206,23 @@ void processaudio_setup(void) {
 	// *******************************************************************************
 	// Add any custom setup code here
 	// *******************************************************************************
+	switch_f32_stateParams_t stateParams = {2U};
+	switch_f32_params_t params = {0U, 0.5F, 2U, 48000U};
+	size_t pStateMemReq;
 
+	if (switch_f32_getStateMemSize(&stateParams, &pStateMemReq) != ERR_STATUS_OK)
+	{
+		log_event(EVENT_FATAL, "Switch: error getting state memory size");
+	}
+	char msg[128];
+	sprintf(msg, "Switch: state memory size required is %d bytes", (uint32_t)pStateMemReq);
+	log_event(EVENT_INFO, msg);
+
+	if (switch_f32_init(&switchH, &params, &stateParams, switchStateMem, SWITCH_STATE_MEMORY_SIZE) != ERR_STATUS_OK)
+	{
+		log_event(EVENT_FATAL, "Switch: error initialising");
+	}
+	log_event(EVENT_INFO, "Switch: initialised");
 }
 
 /*
@@ -220,6 +244,35 @@ void processaudio_setup(void) {
  * block size is set to 32 words, the total number of processor cycles available in each callback
  * is 300,000 cycles or 300,000/32 or 9,375 per sample of audio
  */
+// check to see if params have been updated
+void updatesParams(void)
+{
+	uint8_t switchPosition = (uint8_t)multicore_data->switchPosition;
+
+	if (switch_f32_setPosition(&switchH, switchPosition) != ERR_STATUS_OK)
+	{
+		log_event(EVENT_INFO, "Switch: failed to set switch position");
+	}
+	else
+	{
+		char msg[128];
+		sprintf(msg, "Switch: position set to %d", switchPosition);
+		log_event(EVENT_INFO, msg);
+	}
+
+	multicore_data->paramUpdateFlag = 0U;
+}
+
+#define SET_SWITCH_MANUALLY
+
+#ifndef SET_SWITCH_MANUALLY
+	int sampleCount = 0;
+	uint8_t switchPosition = 0;
+#endif
+
+float *pSwitchSrc[4] = {audiochannel_spdif_0_left_in, audiochannel_spdif_0_left_in,
+					    audiochannel_spdif_0_right_in, audiochannel_spdif_0_right_in};
+float *pSwitchDst[2] = {mcamp_ch1, mcamp_ch2};
 
 // When debugging audio algorithms, helpful to comment out this pragma for more linear single stepping.
 #pragma optimize_for_speed
@@ -244,6 +297,30 @@ void processaudio_callback(void) {
 
 	}
 
+#ifdef SET_SWITCH_MANUALLY
+	if (multicore_data->paramUpdateFlag) { updatesParams(); }
+#else
+	sampleCount += AUDIO_BLOCK_SIZE;
+	if (sampleCount > (48000U * 10U))
+	{
+		sampleCount = 0;
+
+		switchPosition++;
+		switchPosition %= 2;
+
+		if (switch_f32_setPosition(&switchH, switchPosition) != ERR_STATUS_OK)
+		{
+			log_event(EVENT_WARN, "Switch: error setting position");
+		}
+	}
+#endif
+
+	if (switch_f32_process(&switchH, pSwitchSrc, pSwitchDst, AUDIO_BLOCK_SIZE) != ERR_STATUS_OK)
+	{
+		log_event(EVENT_WARN, "Switch: error processing data through switch");
+	}
+
+#if 0U
 	// Otherwise, perform our C-based block processing here!
 	for (int i = 0; i < AUDIO_BLOCK_SIZE; i++) {
 
@@ -343,7 +420,7 @@ void processaudio_callback(void) {
 
 #endif
 	}
-
+#endif
 }
 
 #if (USE_BOTH_CORES_TO_PROCESS_AUDIO)
