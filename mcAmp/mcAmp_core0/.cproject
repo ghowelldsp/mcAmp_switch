@@ -79,10 +79,10 @@
 								<option id="arm.linker.option.proc.1025801469" name="-mproc" superClass="arm.linker.option.proc" useByScannerDiscovery="false" value=" ADSP-SC589" valueType="string"/>
 								<option id="arm.linker.option.sirevision.1635754152" name="-msi-revision" superClass="arm.linker.option.sirevision" useByScannerDiscovery="false" value=" 1.0" valueType="string"/>
 								<option id="arm.linker.option.userlibs.1556024493" name="Additional objects:" superClass="arm.linker.option.userlibs" useByScannerDiscovery="false"/>
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="arm.linker.option.paths.684900256" superClass="arm.linker.option.paths" valueType="libPaths">
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="arm.linker.option.paths.684900256" name="Library search directories (-L):" superClass="arm.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;C:\Docs\projects\code_libraries\testing\code_lib_c_arm\lib&quot;"/>
 								</option>
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="arm.linker.option.libs.1203075938" superClass="arm.linker.option.libs" valueType="libs">
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="arm.linker.option.libs.1203075938" name="Additional libraries (-l):" superClass="arm.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="code_lib_c"/>
 								</option>
 								<inputType id="arm.linker.input.2050982952" superClass="arm.linker.input">
